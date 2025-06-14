@@ -5,7 +5,7 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body>
-  <video id="video" controls width="720" height="405"></video>
+  <video id="video" controls width="1920" height="1080"></video>
   <button id="enable">Enable Haptics</button>
   <script>
     const video = document.getElementById('video');
@@ -13,7 +13,7 @@
     let haptics = [], triggered = new Set();
 
     // Load HLS video
-    const src = 'https://example.com/YOUR_TRAILER.m3u8';
+    const src = 'https://anujwani.github.io/HapticFeedback/Chunks/F1_trailer.m3u8';
     if (Hls.isSupported()) {
       const hls = new Hls();
       hls.loadSource(src);
@@ -23,7 +23,7 @@
     }
 
     // Fetch haptic map
-    fetch('haptics.json')
+    fetch('https://anujwani.github.io/HapticFeedback/haptics.json')
       .then(r => r.json())
       .then(data => haptics = data)
       .catch(console.error);
