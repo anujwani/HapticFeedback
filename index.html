@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>F1 Haptic Web Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+  <video id="video" controls width="720" height="405"></video>
+  <button id="enable">Enable Haptics</button>
+  <script>
+    const video = document.getElementById('video');
+    const btn = document.getElementById('enable');
+    let haptics = [], triggered = new Set();
+
+    // Load HLS video
+    const src = 'https://example.com/YOUR_TRAILER.m3u8';
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(src);
+      hls.attachMedia(video);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src;
+    }
+
+    // Fetch haptic map
+    fetch('haptics.json')
+      .then(r => r.json())
+      .then(data => haptics = data)
+      .catch(console.error);
+
+    // Wait for user gesture to allow vibrate
+    btn.addEventListener('click', () => {
+      if (!('vibrate' in navigator)) return alert('No vibration support');
+      video.play();
+      btn.style.display = 'none';
+    });
+
+    // Sync vibrations during playback
+    video.addEventListener('timeupdate', () => {
+      const t = video.currentTime;
+      haptics.forEach((evt, i) => {
+        if (!triggered.has(i) && t >= evt.time) {
+          navigator.vibrate(evt.duration);
+          triggered.add(i);
+        }
+      });
+    });
+
+    // Reset on replay
+    video.addEventListener('seeked', () => triggered.clear());
+  </script>
+</body>
+</html>
