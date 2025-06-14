@@ -6,51 +6,63 @@
   <title>F1 HLS with Haptics</title>
 </head>
 <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center;">
-
   <h1>F1 Trailer with Haptics</h1>
-  <video id="video" controls width="640" autoplay playsinline></video>
+
+  <video id="video" controls width="720" muted playsinline autoplay></video>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const video = document.getElementById('video');
+    let hapticEvents = [];
+
+    // Load HLS stream
     const hls = new Hls();
     hls.loadSource('https://anujwani.github.io/HapticFeedback/Chunks/F1_trailer.m3u8');
     hls.attachMedia(video);
 
-    let hapticEvents = [];
-
-    function triggerVibration(duration, intensity) {
-      if ('vibrate' in navigator) {
-        navigator.vibrate(duration);
-      }
-    }
-
-    function startHapticSync() {
-      if (!('vibrate' in navigator) || !hapticEvents.length) return;
-
-      hapticEvents.forEach(e => e.triggered = false);
-
-      function check() {
-        const current = video.currentTime;
-        for (const event of hapticEvents) {
-          if (!event.triggered && current >= event.time) {
-            triggerVibration(event.duration, event.intensity);
-            event.triggered = true;
-          }
-        }
-        if (!video.paused && !video.ended) {
-          requestAnimationFrame(check);
-        }
-      }
-
-      requestAnimationFrame(check);
-    }
-
-    fetch('https://anujwani.github.io/HapticFeedback/haptics.json')
-      .then(response => response.json())
+    // Load enhanced haptic events
+    fetch('https://anujwani.github.io/HapticFeedback/haptics_android_advanced.json')
+      .then(res => res.json())
       .then(data => {
         hapticEvents = data;
       });
+
+    // Simulate sharpness + intensity via pattern shaping
+    function simulateHaptic(duration, intensity, sharpness) {
+      if (!('vibrate' in navigator)) return;
+
+      // Convert sharpness to pulse length: sharper = shorter pulses
+      const pulse = Math.max(5, Math.round(30 - sharpness / 10));
+      const count = Math.max(1, Math.round(intensity / 50));
+      const pattern = [];
+
+      for (let i = 0; i < count; i++) {
+        pattern.push(pulse, 5); // pulse duration, then a gap
+      }
+
+      navigator.vibrate(pattern);
+    }
+
+    function startHapticSync() {
+      if (!("vibrate" in navigator) || !hapticEvents.length) return;
+
+      hapticEvents.forEach(e => e.triggered = false);
+
+      function loop() {
+        const now = video.currentTime;
+        for (const e of hapticEvents) {
+          if (!e.triggered && now >= e.time) {
+            simulateHaptic(e.duration, e.intensity, e.sharpness);
+            e.triggered = true;
+          }
+        }
+        if (!video.paused && !video.ended) {
+          requestAnimationFrame(loop);
+        }
+      }
+
+      requestAnimationFrame(loop);
+    }
 
     video.addEventListener('play', startHapticSync);
   </script>
